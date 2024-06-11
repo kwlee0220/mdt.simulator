@@ -1,0 +1,101 @@
+plugins {
+	id 'java'
+	id 'eclipse'
+	id 'org.springframework.boot' version '3.2.4'
+	id 'io.spring.dependency-management' version '1.1.4'
+}
+
+group = 'etri'
+version = '0.0.1'
+
+sourceCompatibility = '17'
+targetCompatibility = '17'
+[compileJava,compileTestJava]*.options*.encoding = 'UTF-8'
+
+repositories {
+	mavenCentral()
+}
+
+ext {
+	logback_version = '1.3.14'
+	lombok_version = '1.18.32'
+	
+	aas4j_version = '1.0.0'
+	
+	spring_boot_version = '3.2.4'
+}
+
+dependencies {
+	implementation project(":utils")
+	implementation project(":mdt.client")
+	
+	// Logback with SLF4j
+	implementation "ch.qos.logback:logback-classic:${logback_version}"
+
+	// Lombok
+	compileOnly "org.projectlombok:lombok:${lombok_version}"
+	annotationProcessor 'org.projectlombok:lombok'
+
+	// AAS model
+	implementation "org.eclipse.digitaltwin.aas4j:aas4j-dataformat-json:${aas4j_version}"
+
+	// Spring boot
+	implementation "org.springframework.boot:spring-boot-starter-web:${spring_boot_version}"
+	testImplementation "org.springframework.boot:spring-boot-starter-test:${spring_boot_version}"
+}
+
+configurations.all {
+	exclude group: 'commons-logging', module: 'commons-logging'
+}
+
+task sourceJar(type: Jar) {
+	classifier 'sources'
+	from sourceSets.main.allSource
+}
+
+task javadocJar(type: Jar) {
+	classifier 'javadoc'
+	from javadoc.destinationDir
+}
+
+bootJar {
+	archiveFileName = "${baseName}-${version}-all.jar"
+	mainClass = 'mdt.simulator.controller.MDTSimulatorApplication'
+}
+
+eclipse {
+	classpath {
+		file {
+			withXml {
+				def node = it.asNode()
+				node.appendNode('classpathentry', [kind: 'output', path: 'build/classes'])
+			}
+			
+			whenMerged { cp ->
+				Map entryByPath = cp.entries.groupBy { entry -> entry.path }
+				entryByPath.each { key, values ->
+					if ( values.size() > 1 ) {
+            			def entry = values.first()
+            			if ( entry.kind == 'src' ) {
+            				entry.includes = []
+            				entry.excludes = []
+            			}
+            			int index = cp.entries.indexOf entry
+            			cp.entries.removeAll values
+            			cp.entries.add index, entry
+					}
+				}
+				cp.entries.each { entry ->
+					if ( entry.kind == 'src' && entry.hasProperty('output') ) {
+						if ( entry.path.contains('/test/') ) {
+							entry.output = 'build/test_classes'
+						}
+						else {
+							entry.output = 'build/classes'
+						}
+					}
+				}
+			}
+		}
+	}
+}
