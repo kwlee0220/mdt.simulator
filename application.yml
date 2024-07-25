@@ -18,12 +18,18 @@ logging:
       console: "%d{yyyy-MM-dd HH:mm:ss} | %-5level | %-40.40logger{39} | %msg%n"
 
 mdt-server:
-   endpoint: http://localhost:12985/instance_manager
+   endpoint: http://localhost:12985/instance-manager
    
+#simulation-endpoint: https://localhost:14435/api/v3.0/submodels/aHR0cDovL3d3dy5sZy5jby5rci9yZWZyaWdlcmF0b3IvSW5uZXJjYXNlL1NpbXVsYXRpb24vUHJvY2Vzc09wdGltaXphdGlvbg==  
+simulation-endpoint: ""
+ 
+ 
 simulator:
    endpoint: http://localhost:12987/simulator
-   submodelId: http://www.lg.co.kr/refrigerator/Innercase/Simulation/ProcessOptimization
-   workingDirectory: C:\Temp\simulator
-   commandPrefix: [ "C:/Program Files (x86)/EditPlus/editplus" ]
+   submodelId: https://example.com/ids/내함_성형/sm/Simulation/ProcessOptimization
+   workingDirectory: C:\Temp\mdt\simulator\workspace
+   commandPrefix: [ "C:/Program Files/Notepad++/notepad++" ]
+#   commandPrefix: [ "C:/Users/kwlee/AppData/Local/Programs/Microsoft VS Code/Code" ]
+#   commandPrefix: [ "/usr/bin/gedit" ]
    timeout: PT5M
-   sessionRetainTimeout: PT1M
+   sessionRetainTimeout: PT30S

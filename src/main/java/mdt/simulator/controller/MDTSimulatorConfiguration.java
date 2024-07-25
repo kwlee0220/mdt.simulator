@@ -14,8 +14,7 @@ import lombok.Setter;
  *
  * @author Kang-Woo Lee (ETRI)
  */
-@Getter
-@Setter
+@Getter @Setter
 public class MDTSimulatorConfiguration {
 	private String endpoint;
 	private String submodelId;

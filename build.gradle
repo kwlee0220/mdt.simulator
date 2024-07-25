@@ -6,7 +6,7 @@ plugins {
 }
 
 group = 'etri'
-version = '0.0.1'
+version = '0.9.0'
 
 sourceCompatibility = '17'
 targetCompatibility = '17'
@@ -59,7 +59,8 @@ task javadocJar(type: Jar) {
 }
 
 bootJar {
-	archiveFileName = "${baseName}-${version}-all.jar"
+	classifier 'all'
+//	archiveFileName = "${baseName}-${version}-all.jar"
 	mainClass = 'mdt.simulator.controller.MDTSimulatorApplication'
 }
 

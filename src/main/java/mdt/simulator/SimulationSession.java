@@ -6,18 +6,32 @@ import java.util.List;
 import utils.async.Execution;
 
 import lombok.Builder;
-import lombok.Getter;
 
 
 /**
  *
  * @author Kang-Woo Lee (ETRI)
  */
-@Getter
 @Builder
 public class SimulationSession {
-	private String sessionId;
-	private Execution<List<String>> simulation;
-	private String output;
-	private Duration sessionRetainTimeout;
+	private final String sessionId;
+	private final Execution<List<String>> simulation;
+	private final String output;
+	private final Duration sessionRetainTimeout;
+	
+	public String getSessionId() {
+		return sessionId;
+	}
+	
+	public Execution<List<String>> getSimulation() {
+		return simulation;
+	}
+	
+	public String getOutput() {
+		return output;
+	}
+	
+	public Duration getSessionRetainTimeout() {
+		return sessionRetainTimeout;
+	}
 }

@@ -8,7 +8,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import mdt.client.MDTClientConfig;
-import mdt.model.instance.MDTInstanceManager;
+import mdt.client.instance.HttpMDTInstanceManagerClient;
 
 /**
  *
@@ -23,9 +23,9 @@ public class ApplicationConfiguration {
 	}
 
 	@Bean
-	MDTInstanceManager getMDTInstanceManagerClient() throws KeyManagementException, NoSuchAlgorithmException {
-		MDTClientConfig conf = getMDTClientConfig();
-		return conf.createMDTInstanceManager();
+	HttpMDTInstanceManagerClient getMDTInstanceManagerClient() throws KeyManagementException,
+																	NoSuchAlgorithmException {
+		return HttpMDTInstanceManagerClient.create(getMDTClientConfig());
 	}
 	
 	@Bean
