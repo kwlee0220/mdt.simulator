@@ -52,13 +52,13 @@ import utils.func.Funcs;
 import utils.io.FileUtils;
 
 import mdt.client.SubmodelUtils;
-import mdt.client.instance.HttpMDTInstanceClient;
 import mdt.client.instance.HttpMDTInstanceManagerClient;
 import mdt.client.resource.ExtendedSubmodelService;
 import mdt.client.resource.HttpSubmodelServiceClient;
 import mdt.client.simulation.OperationStatus;
 import mdt.client.simulation.OperationStatusResponse;
 import mdt.ksx9101.simulation.Simulation;
+import mdt.model.instance.MDTInstance;
 import mdt.model.registry.ResourceNotFoundException;
 import mdt.model.service.SubmodelService;
 import mdt.simulator.MDTSimulator;
@@ -110,7 +110,7 @@ public class MDTSimulatorController implements InitializingBean {
 			svc = HttpSubmodelServiceClient.newTrustAllSubmodelServiceClient(m_simulationEndpoint);
 		}
 		else {
-			HttpMDTInstanceClient inst = m_mdtClient.getAllInstancesBySubmodelId(m_config.getSubmodelId());
+			MDTInstance inst = m_mdtClient.getInstanceBySubmodelId(m_config.getSubmodelId());
 			svc = inst.getSubmodelServiceById(m_config.getSubmodelId());
 		}
 		m_xsvc = ExtendedSubmodelService.from(svc);
@@ -159,7 +159,7 @@ public class MDTSimulatorController implements InitializingBean {
 				Entry<String,JsonNode> first = Funcs.getFirstOrNull(elements);
 				if ( first.getKey().equals("submodelId") ) {
 					String submodelId = first.getValue().asText();
-					HttpMDTInstanceClient inst = m_mdtClient.getAllInstancesBySubmodelId(submodelId);
+					MDTInstance inst = m_mdtClient.getInstanceBySubmodelId(submodelId);
 					return inst.getSubmodelServiceById(submodelId);
 				}
 				else if ( first.getKey().equals("submodelEndpoint") ) {

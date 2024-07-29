@@ -25,7 +25,7 @@ public class ApplicationConfiguration {
 	@Bean
 	HttpMDTInstanceManagerClient getMDTInstanceManagerClient() throws KeyManagementException,
 																	NoSuchAlgorithmException {
-		return HttpMDTInstanceManagerClient.create(getMDTClientConfig());
+		return HttpMDTInstanceManagerClient.connect(getMDTClientConfig());
 	}
 	
 	@Bean
