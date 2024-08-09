@@ -1,7 +1,7 @@
 package mdt.simulator.controller;
 
-import static mdt.client.SubmodelUtils.cast;
-import static mdt.client.SubmodelUtils.traverse;
+import static mdt.model.SubmodelUtils.cast;
+import static mdt.model.SubmodelUtils.traverse;
 
 import java.io.File;
 import java.net.URI;
@@ -33,8 +33,8 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -51,13 +51,13 @@ import utils.async.op.AsyncExecutions;
 import utils.func.Funcs;
 import utils.io.FileUtils;
 
-import mdt.client.SubmodelUtils;
 import mdt.client.instance.HttpMDTInstanceManagerClient;
 import mdt.client.resource.ExtendedSubmodelService;
 import mdt.client.resource.HttpSubmodelServiceClient;
 import mdt.client.simulation.OperationStatus;
 import mdt.client.simulation.OperationStatusResponse;
 import mdt.ksx9101.simulation.Simulation;
+import mdt.model.SubmodelUtils;
 import mdt.model.instance.MDTInstance;
 import mdt.model.registry.ResourceNotFoundException;
 import mdt.model.service.SubmodelService;
@@ -149,35 +149,9 @@ public class MDTSimulatorController implements InitializingBean {
 		
 		m_simulator = new SubprocessSimulator(m_config.getWorkingDirectory(), m_config.getCommandPrefix());
 	}
-	
-	private SubmodelService getSimulationSubmodelService(String parameters) {
-		try {
-			JsonNode jnode = s_deser.readTree(parameters);
-
-			Set<Map.Entry<String, JsonNode>> elements = jnode.properties();
-			if ( elements.size() == 1 ) {
-				Entry<String,JsonNode> first = Funcs.getFirstOrNull(elements);
-				if ( first.getKey().equals("submodelId") ) {
-					String submodelId = first.getValue().asText();
-					MDTInstance inst = m_mdtClient.getInstanceBySubmodelId(submodelId);
-					return inst.getSubmodelServiceById(submodelId);
-				}
-				else if ( first.getKey().equals("submodelEndpoint") ) {
-					String submodelEndpoint = first.getValue().asText();
-					return HttpSubmodelServiceClient.newTrustAllSubmodelServiceClient(submodelEndpoint);
-				}
-			}
-		}
-		catch ( Exception e ) {
-			throw new IllegalArgumentException("Invalid Simulation request: " + parameters);
-		}
-		
-		throw new IllegalArgumentException("Invalid Simulation request: " + parameters);
-	}
 
     @PostMapping({""})
-    public ResponseEntity<OperationStatusResponse<Void>> start(
-    													@RequestParam(name="parameters") String parameters) {
+    public ResponseEntity<OperationStatusResponse<String>> start(@RequestBody String parameters) {
     	try {
         	SubmodelService simulationService = getSimulationSubmodelService(parameters);
     		Submodel submodel = simulationService.getSubmodel();
@@ -213,19 +187,19 @@ public class MDTSimulatorController implements InitializingBean {
     			delayedSessionClose.start();
     		});
     		
-    		OperationStatusResponse<Void> resp = toResponse(session);
+    		OperationStatusResponse<String> resp = toResponse(session);
     		return ResponseEntity.created(new URI(sessionId)).body(resp);
 			
     	}
     	catch ( IllegalArgumentException e ) {
-    		OperationStatusResponse<Void> resp = OperationStatusResponse.<Void>builder()
+    		OperationStatusResponse<String> resp = OperationStatusResponse.<String>builder()
 																		.status(OperationStatus.FAILED)
 																		.message("" + e)
 																		.build();
     		return ResponseEntity.badRequest().body(resp);
     	}
     	catch ( Exception e ) {
-    		OperationStatusResponse<Void> resp = OperationStatusResponse.<Void>builder()
+    		OperationStatusResponse<String> resp = OperationStatusResponse.<String>builder()
 																		.status(OperationStatus.FAILED)
 																		.message("" + e)
 																		.build();
@@ -235,11 +209,11 @@ public class MDTSimulatorController implements InitializingBean {
 
     @GetMapping({"/{opId}"})
     @ResponseStatus(HttpStatus.OK)
-    public OperationStatusResponse status(@PathVariable("opId") String opId) {
+    public OperationStatusResponse<String> status(@PathVariable("opId") String opId) {
     	SimulationSession session = m_sessions.get(opId);
     	if ( session == null ) {
     		String msg = String.format("SimulationSession is not found: handle=%s", opId);
-    		return OperationStatusResponse.builder()
+    		return OperationStatusResponse.<String>builder()
     									.status(OperationStatus.FAILED)
     									.message(msg)
     									.build();
@@ -250,11 +224,11 @@ public class MDTSimulatorController implements InitializingBean {
 
     @DeleteMapping({"/{opId}"})
     @ResponseStatus(HttpStatus.OK)
-    public OperationStatusResponse delete(@PathVariable("opId") String opId) {
+    public OperationStatusResponse<String> delete(@PathVariable("opId") String opId) {
     	SimulationSession session = m_sessions.remove(opId);
     	if ( session == null ) {
     		String msg = String.format("SimulationSession is not found: handle=%s", opId);
-    		return OperationStatusResponse.builder()
+    		return OperationStatusResponse.<String>builder()
     									.status(OperationStatus.FAILED)
     									.message(msg)
     									.build();
@@ -264,6 +238,31 @@ public class MDTSimulatorController implements InitializingBean {
     	
     	return toResponse(session);
     }
+	
+	private SubmodelService getSimulationSubmodelService(String parameters) {
+		try {
+			JsonNode jnode = s_deser.readTree(parameters);
+
+			Set<Map.Entry<String, JsonNode>> elements = jnode.properties();
+			if ( elements.size() == 1 ) {
+				Entry<String,JsonNode> first = Funcs.getFirstOrNull(elements);
+				if ( first.getKey().equals("submodelId") ) {
+					String submodelId = first.getValue().asText();
+					MDTInstance inst = m_mdtClient.getInstanceBySubmodelId(submodelId);
+					return inst.getSubmodelServiceById(submodelId);
+				}
+				else if ( first.getKey().equals("submodelEndpoint") ) {
+					String submodelEndpoint = first.getValue().asText();
+					return HttpSubmodelServiceClient.newTrustAllSubmodelServiceClient(submodelEndpoint);
+				}
+			}
+		}
+		catch ( Exception e ) {
+			throw new IllegalArgumentException("Invalid Simulation request: " + parameters);
+		}
+		
+		throw new IllegalArgumentException("Invalid Simulation request: " + parameters);
+	}
 
     private StartableExecution<List<String>> startSimulation(Submodel submodel) {
 		Preconditions.checkArgument(submodel != null);
@@ -351,7 +350,7 @@ public class MDTSimulatorController implements InitializingBean {
     	}
     }
     
-    private OperationStatusResponse<Void> toResponse(SimulationSession session) {
+    private OperationStatusResponse<String> toResponse(SimulationSession session) {
     	Execution<List<String>> sim = session.getSimulation();
     	
     	OperationStatus status = toSimulationStatus(sim);
@@ -365,10 +364,10 @@ public class MDTSimulatorController implements InitializingBean {
     		default -> throw new IllegalStateException("Unexpected Simulation state: "
     														+ sim.getState());
     	};
-    	return OperationStatusResponse.<Void>builder()
-			    							.status(status)
-											.message(msg)
-											.build();
+    	return OperationStatusResponse.<String>builder()
+		    							.status(status)
+										.message(msg)
+										.build();
     }
 
 	private OperationStatus toSimulationStatus(Execution<?> exec) {
